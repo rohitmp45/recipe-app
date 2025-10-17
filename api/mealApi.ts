@@ -51,9 +51,30 @@ export const getMealById = async (id: string): Promise<Meal> => {
 };
 
 export const getMealsByCategory = async (category: string) => {
-  const res = await fetch(
-    `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${category}`,
-  );
-  const data = await res.json();
-  return data.meals;
+  if (!category || typeof category !== 'string') {
+    console.error(
+      '❌ Invalid category passed to getMealsByCategory:',
+      category,
+    );
+    return [];
+  }
+
+  try {
+    // Encode to avoid space issues (e.g., "Side Dish" → "Side%20Dish")
+    const encoded = encodeURIComponent(category.trim());
+    const response = await fetch(
+      `https://www.themealdb.com/api/json/v1/1/filter.php?c=${encoded}`,
+    );
+    const json = await response.json();
+
+    if (!json.meals || json.meals === 'Invalid ID') {
+      console.warn('⚠️ Invalid category from API:', category, json);
+      return [];
+    }
+
+    return json.meals;
+  } catch (err) {
+    console.error('🔥 Error fetching meals by category:', err);
+    return [];
+  }
 };

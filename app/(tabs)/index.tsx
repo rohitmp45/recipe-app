@@ -5,7 +5,7 @@ import CategoryMeals from 'components/CategoryMeals';
 import FeaturedMealCard from 'components/FeaturedMealCard';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet } from 'react-native';
+import { FlatList, SafeAreaView, StyleSheet, View } from 'react-native';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
@@ -21,6 +21,11 @@ export default function HomeScreen() {
     const [meal, cat] = await Promise.all([fetchRandomMeal(), getCategories()]);
     setFeaturedMeal(meal);
     setCategories(cat);
+
+    // ✅ Automatically select the first category when loaded
+    if (cat?.length > 0 && !selectedCategory) {
+      setSelectedCategory(cat[0].strCategory);
+    }
   };
 
   useEffect(() => {
@@ -29,26 +34,37 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
-        {/* Featured Meal */}
-        {featuredMeal && (
-          <FeaturedMealCard
-            meal={featuredMeal}
-            onPress={() => router.push(`/meal/${featuredMeal.idMeal}`)}
-          />
-        )}
+      <FlatList
+        data={[]} // Dummy FlatList to enable scroll
+        keyExtractor={(_, index) => index.toString()}
+        renderItem={null}
+        ListHeaderComponent={
+          <View>
+            {/* ✅ Featured Meal */}
+            {featuredMeal && (
+              <FeaturedMealCard
+                meal={featuredMeal}
+                onPress={() => router.push(`/meal/${featuredMeal.idMeal}`)}
+              />
+            )}
 
-        {/* Category Horizontal List */}
-        <CategoryList categories={categories} onPress={setSelectedCategory} />
+            {/* ✅ Category Horizontal List */}
+            <CategoryList
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onPress={(cat) => setSelectedCategory(cat)}
+            />
 
-        {/* Category Meals */}
-        {selectedCategory && (
-          <CategoryMeals
-            category={selectedCategory}
-            key={selectedCategory} // ensures re-render & unique key
-          />
-        )}
-      </ScrollView>
+            {/* ✅ Meals under selected category */}
+            {selectedCategory ? (
+              <CategoryMeals
+                key={selectedCategory}
+                category={selectedCategory}
+              />
+            ) : null}
+          </View>
+        }
+      />
     </SafeAreaView>
   );
 }

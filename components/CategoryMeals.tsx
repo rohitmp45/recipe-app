@@ -3,6 +3,7 @@ import { getMealsByCategory } from 'api/mealApi';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   StyleSheet,
@@ -33,19 +34,31 @@ const styles = StyleSheet.create({
 export default function CategoryMeals({ category }: Props) {
   const router = useRouter();
   const [meals, setMeals] = useState<Meal[]>([]);
-  const [loading, setLoading] = useState(false);
-  console.log('catmeal23', meals);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const loadMeals = async () => {
-      setLoading(true);
-      const data = await getMealsByCategory(category);
-      setMeals(data);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const data = await getMealsByCategory(category);
+        setMeals(data || []);
+      } finally {
+        setLoading(false);
+      }
     };
     loadMeals();
   }, [category]);
 
-  if (loading) return <Text style={{ padding: 16 }}>Loading...</Text>;
+  if (loading)
+    return (
+      <View style={{ padding: 16, alignItems: 'center' }}>
+        <ActivityIndicator size="small" color="#000" />
+        <Text>Loading {category} meals...</Text>
+      </View>
+    );
+
+  if (!meals.length)
+    return <Text style={{ padding: 16 }}>No meals found for {category}.</Text>;
 
   return (
     <View style={{ marginTop: 16, paddingHorizontal: 16 }}>
